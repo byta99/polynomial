@@ -1,0 +1,86 @@
+// 迭代版 FFT
+#include <bits/stdc++.h>
+#define int long long
+using namespace std;
+const int N = 4000002, inf = (1 << 60), mod = 998244353;
+const double Pi = acos(-1.0);
+int n, m, r[N], maxx = 1, l;
+
+struct Complex //复数类
+{
+    double x, y;
+    Complex(double xx = 0, double yy = 0) : x(xx), y(yy) {}
+    
+    Complex operator+(Complex b)//复数加法
+    {
+        return Complex(x + b.x, y + b.y);
+    }
+    
+    Complex operator-(Complex b)//复数减法
+    {
+        return Complex(x - b.x, y - b.y);
+    }
+    
+    Complex operator*(Complex b)//复数乘法
+    {
+        return Complex(x * b.x - y * b.y, x * b.y + y * b.x);
+    }
+};
+
+Complex a[N], b[N], c[N];
+
+void fft(Complex *cm, int tag)
+{
+    for(int i = 0; i < maxx; i++) 
+        if(i < r[i]) swap(cm[i], cm[r[i]]);//求出要迭代的序列 
+    
+    for(int mid = 1; mid < maxx; mid = mid << 1)//待合并区间的中点
+    {
+        Complex wk(cos(Pi / mid) , tag * sin(Pi / mid)); //单位根 
+        for(int R = mid << 1,j=0;j < maxx; j += R)//R是区间的右端点，j表示前已经到哪个位置了 
+        {
+            Complex w(1,0);//幂 
+            for(int k = 0; k < mid; k++)//枚举左半部分 
+            {
+                Complex x = cm[j + k], y = w * cm[j + mid + k];//蝴蝶效应 
+                cm[j + k] = x + y;
+                cm[j + mid + k] = x - y;
+                w = w * wk;
+            }
+        }
+    }
+}
+
+signed main()
+{
+    std::ios::sync_with_stdio(0);
+    cin >> n >> m;
+    for(int i = 0; i <= n; i++) cin >> a[i].x;
+    for(int i = 0; i <= m; i++) cin >> b[i].x;
+    
+    while((maxx) <= (n + m)) 
+    {
+       maxx = maxx << 1;//找到最近的二次幂，因为总位数是n+m+1，所以用<=
+       l++;
+    }
+    for(int i = 0; i < maxx; i++)
+    {
+        r[i] = (r[i >> 1] >> 1) | ((i & 1) << (l - 1));
+    }
+    
+    fft(a, 1);
+    fft(b, 1);// FFT 将多项式 a，b 转换为值表示法 
+    
+    for(int i = 0; i <= maxx; i++)
+    {
+        c[i] = a[i] * b[i]; // 多项式点值表示法下的乘法
+    }
+    
+    fft(c, -1); // FFT 逆变换，将多项式 c 转换为系数表示法
+    
+    for(int i = 0; i <= n + m; i++)
+    {
+        cout << (int)(c[i].x / maxx + 0.5) << " "; //除n后double转回来防精度问题
+    }
+    return 0;
+}
