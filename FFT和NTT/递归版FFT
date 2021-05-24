@@ -1,0 +1,82 @@
+// 递归版 FFT
+#include <bits/stdc++.h>
+#define int long long
+using namespace std;
+const int N = 4000002, inf = (1 << 60), mod = 998244353;
+const double Pi = acos(-1.0);
+int n, m;
+
+struct Complex //复数类
+{
+    double x, y;
+    Complex(double xx = 0, double yy = 0) : x(xx), y(yy) {}
+    
+    Complex operator+(Complex b)//复数加法
+    {
+        return Complex(x + b.x, y + b.y);
+    }
+    
+    Complex operator-(Complex b)//复数减法
+    {
+        return Complex(x - b.x, y - b.y);
+    }
+    
+    Complex operator*(Complex b)//复数乘法
+    {
+        return Complex(x * b.x - y * b.y, x * b.y + y * b.x);
+    }
+};
+
+Complex a[N], b[N], c[N];
+
+void fft(Complex *cm, int cnum, int tag)
+{
+    if (cnum == 1) // 当到达最底层
+        return;
+    
+    int half = cnum / 2;
+    Complex cm1[half], cm2[half];    //取一半
+    for(int i = 0; i < cnum; i += 2) ///根据下标的奇偶性分类
+    {
+        cm1[i / 2] = cm[i];
+        cm2[i / 2] = cm[i + 1];
+    }
+    
+    fft(cm1, half, tag); //因为cnum变成一半，这一可以转为x平方的表示
+    fft(cm2, half, tag);
+    Complex wk = Complex(cos(2 * Pi / cnum), tag * sin(2 * Pi / cnum)), w(1, 0); ////Wk为单位根，w表示幂
+    for (int i = 0; i < half; i++)                                                
+    {
+        Complex buf = w * cm2[i]; //套公式的部分
+        cm[i] = cm1[i] + buf;
+        cm[i + half] = cm1[i] - buf;
+        w = w * wk;
+    }
+}
+
+signed main()
+{
+    std::ios::sync_with_stdio(0);
+    cin >> n >> m;
+    for(int i = 0; i <= n; i++) cin >> a[i].x;
+    for(int i = 0; i <= m; i++) cin >> b[i].x;
+    
+    int maxx = 1;
+    while((maxx) <= (n + m)) maxx = maxx << 1;//找到最近的二次幂，因为总位数是n+m+1，所以用<=
+    
+    fft(a, maxx, 1);
+    fft(b, maxx, 1);// FFT 将多项式 a，b 转换为值表示法 
+    
+    for(int i = 0; i <= maxx; i++)
+    {
+        c[i] = a[i] * b[i]; // 多项式点值表示法下的乘法
+    }
+    
+    fft(c, maxx, -1); // FFT 逆变换，将多项式 c 转换为系数表示法
+    
+    for(int i = 0; i <= n + m; i++)
+    {
+        cout << (int)(c[i].x / maxx + 0.5) << " "; //除n后double转回来防精度问题
+    }
+    return 0;
+}
