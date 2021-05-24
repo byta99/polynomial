@@ -1,0 +1,94 @@
+//NTT
+#include<bits/stdc++.h>
+#define int long long
+using namespace std;
+const int N = 400002, G = 3, mod = 998244353;
+int n, m, len, r[N], a[N], b[N], maxx = 1;
+
+inline int read()
+{
+    register int x=0,f=1;
+    char ch=getchar();
+    while(!isdigit(ch))
+    {
+        if(ch=='-')f=-1;
+        ch=getchar();
+    }
+    while(isdigit(ch))
+    {
+        x=(x<<1)+(x<<3)+(ch^48);
+        ch=getchar();
+    }
+    return x*f;
+}
+
+int q_pow(int P, int Q) 
+{
+    int res = 1;
+    while(Q > 0) 
+    {
+        if(Q & 1) res = (res * P) % mod;
+        P = (P * P) % mod;
+        Q >>= 1;
+    }
+    return res;
+}
+
+void ntt(int *cm, int tag) 
+{
+    for(int i = 0; i < maxx; i++) 
+    {
+        if(i < r[i]) swap(cm[i], cm[r[i]]);
+    }
+    for(int i = 1; i <maxx; i <<= 1) 
+    {
+        int gn = q_pow(G, (mod - 1) / (i << 1));
+        if(tag == -1) gn = q_pow(gn, mod - 2);
+        for(int j = 0; j < maxx; j += i << 1) 
+        {
+            int w = 1;
+            for(int k = 0; k < i; k++) 
+            {
+                int x = cm[j + k], y = (w * cm[j + k + i]) % mod;
+                cm[j + k] = (x + y) % mod;
+                cm[j + k + i] = ((x - y) % mod + mod) % mod;
+                w = (w * gn) % mod;
+            }
+        }
+    }
+}
+
+signed main() 
+{
+    n = read(); m = read();
+    for(int i = 0; i <= n; i++) 
+	{
+        a[i] = read();
+    }
+    for(int i = 0; i <= m; i++) 
+	{
+        b[i] = read();
+    }
+    while(maxx <= m + n)
+    {
+        maxx = maxx << 1;
+        len++;
+    }
+    for(int i = 0; i < maxx; i++) 
+	{
+        r[i] = (r[i >> 1] >> 1) | ((i & 1) << (len - 1));
+    }
+    ntt(a, 1);
+    ntt(b, 1);
+    for(int i = 0; i <= maxx; i++) 
+	{
+        a[i] = (a[i] * b[i]) % mod;
+    }
+    ntt(a, -1);
+    int invn = q_pow(maxx, mod - 2);
+    for(int i = 0; i <= m + n; i++) 
+	{
+        cout << (a[i] * invn) % mod << " ";
+    }
+    return 0;
+}
